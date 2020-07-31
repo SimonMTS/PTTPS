@@ -1,6 +1,7 @@
 #include <functional>
 #include <server/pttps_base_server.cpp>
 #include <diffie_hellmann_helper.cpp>
+#include <sp_network_encryption_helper.cpp>
 #include <hex_helper.cpp>
 
 void callback(unsigned char* received_message);
@@ -17,14 +18,29 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
+void on_dh_msg(unsigned char* rm);
+void on_sp_msg(unsigned char* rm);
+
 void callback(unsigned char* received_message)
 {
+    
+    char type[5] = { '\0', '\0', '\0', '\0', '\0' };
+    memcpy(&type[0], &received_message[0], 4);
+    
+    if ( strcmp(type, "DHKE") == 0 ) {
+        on_dh_msg( received_message );
+    } else if ( strcmp(type, "SPNE") == 0 ) {
+        on_sp_msg( received_message );
+    }
 
-    std::cout << "\nReceived msg:\n"; 
-    print_hex(received_message);
+}
+
+void on_dh_msg(unsigned char* received_message)
+{
+
+    print_hex_DH_received(received_message);
 
 
-    // bad
     unsigned int k;
     unsigned int list[5] = { 0, 0, 0, 0, 0 };
     {
@@ -45,11 +61,24 @@ void callback(unsigned char* received_message)
     pttps_server.send_msg(received_message);
 
 
-    std::cout << "\n\nSent msg:\n"; 
-    print_hex(received_message);
-    std::cout << "\n\n";
+    print_hex_DH_received_followup(list[2], list[4], k);
 
-    printf("\nPrivate_key: %llu\n", list[2]);
-    printf("Shared_key: %llu\n\n-\n", k);
+    print_hex_DH_sent(received_message);
 
+}
+
+void on_sp_msg(unsigned char* received_message)
+{
+
+    print_hex_SP_received(received_message);
+
+
+    char msg[17];
+    memcpy(&msg[0], &received_message[4], 16);
+    msg[16] = '\0';
+
+    sp_network_encryption_helper::apply_sp_network_pass(msg, 0);
+
+    print_hex_SP_received_followup(msg);
+    
 }

@@ -69,32 +69,41 @@ class pttps_base_server {
             return false;
         }
 
-        unsigned char buffer[32] = {0};
+        unsigned char buffer[20] = {0};
         while(true) {
-            if ( (this->new_socket = accept(this->server_fd, (struct sockaddr *)&this->address,   (socklen_t*)&this->addrlen)) < 0 ) 
-            { 
-                perror("accept"); 
-                exit(EXIT_FAILURE); 
-            } 
 
-            memset(buffer, 0, sizeof buffer);
-
-            read( this->new_socket , buffer, 32); 
-
-            if ( buffer[0] == 0x00 ) {
-                std::cout << "\nReceived stop msg\n"; 
-                return 0;
+            std::cout << "\n\u001b[32;1m -- |\u001b[0m Listening for socket connections\n";
+            
+            if ( (this->new_socket = accept(this->server_fd, (struct sockaddr *)&this->address,   (socklen_t*)&this->addrlen)) < 0 )
+            {
+                perror("accept");
+                exit(EXIT_FAILURE);
             }
+            
+            while(true) {
+                
+                memset(buffer, 0, sizeof buffer);
 
-            callback( buffer );
-
+                std::cout << "\n\u001b[32;1m -- |\u001b[0m Listening for socket packets\n";
+                
+                read( this->new_socket , buffer, 20); 
+                
+                if ( buffer[0] == 0x00 ) {
+                    std::cout << "\n\u001b[31;1m -- |\u001b[0m Client Disconnected\n";
+                    break;
+                }
+                
+                callback( buffer );
+            
+            }
+            
         }
 
     }
 
     void send_msg(unsigned char* message) {
         
-        send( this->new_socket , message , 32 , 0 ); 
+        send( this->new_socket, message, 20, 0 ); 
 
     }
 

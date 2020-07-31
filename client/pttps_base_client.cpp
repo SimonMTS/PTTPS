@@ -1,6 +1,7 @@
 #ifndef pttps_base_socket_H
 #define pttps_base_socket_H
 
+#include <hex_helper.cpp>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -13,17 +14,20 @@ class pttps_base_client {
     private:
     int sock = 0;
     bool setup_complete = false;
-
-    public:
     char* ip_address;
     int port;
 
-    int setup() {
+    public:
+    pttps_base_client(char* ip_address, int port) {
+
+        this->ip_address = ip_address;
+        this->port = port;
+
 
         if ((this->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         {
             printf("\nSocket creation error \n");
-            return -1;
+            exit(EXIT_FAILURE);
         }
     
         struct sockaddr_in serv_addr;
@@ -33,30 +37,50 @@ class pttps_base_client {
         if ( inet_pton(AF_INET, this->ip_address, &serv_addr.sin_addr) <= 0 )
         {
             printf("\nInvalid address/ Address not supported \n");
-            return -1;
+            exit(EXIT_FAILURE);
         }
     
         if ( connect(this->sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0 ) 
         {
             printf("\nConnection Failed \n");
-            return -1;
+            exit(EXIT_FAILURE);
         }
 
         this->setup_complete = true;
 
-        return 0;
-        
     }
     
-    bool send_msg(unsigned char* sent_message, unsigned char* received_message) {
+    bool send_dh_msg(unsigned char* sent_message, unsigned char* received_message) {
 
         if ( !this->setup_complete ) {
             printf("\nSetup not complete \n");
             return false;
         }
+
+        print_hex_DH_sent(sent_message);
         
-        send( this->sock, sent_message, 32, 0 );
-        read( this->sock, received_message, 32 );
+        send( this->sock, sent_message, 20, 0 );
+        read( this->sock, received_message, 20 );
+
+        print_hex_DH_received(received_message);
+
+        return true;
+
+    }
+    
+    bool send_sp_msg(unsigned char* sent_message, unsigned char* received_message) {
+
+        if ( !this->setup_complete ) {
+            printf("\nSetup not complete \n");
+            return false;
+        }
+
+        print_hex_SP_sent(sent_message);
+        
+        send( this->sock, sent_message, 20, 0 );
+        // read( this->sock, received_message, 20 );
+        
+        // print_hex_DH_received(received_message);
 
         return true;
 

@@ -3,7 +3,6 @@
 
 #include <client/pttps_base_client.cpp>
 #include <diffie_hellmann_helper.cpp>
-#include <hex_helper.cpp>
 #include <random>
 #include <cmath>
 #include <algorithm>
@@ -13,15 +12,12 @@
 class pttps_key_exchange_client {
 
     private:
-    pttps_base_client pttps_client;
+    pttps_base_client* base_client;
 
     public:
-    pttps_key_exchange_client(char* ip) {
+    pttps_key_exchange_client(pttps_base_client* base_client) {
 
-        pttps_client.ip_address = ip;
-        pttps_client.port = 8080;
-
-        pttps_client.setup();
+        this->base_client = base_client;
 
     }
 
@@ -33,36 +29,32 @@ class pttps_key_exchange_client {
 
         this->exchange_numbers(list);
 
-        
-        printf("\nPrivate_key: %llu\n", list[2]);
+        unsigned int shared_key = DHH.calc_shared_key(list, list[4]);
 
-        return DHH.calc_shared_key(list, list[4]);
+        print_hex_DH_received_followup(list[2], list[3], shared_key);
+
+        return shared_key;
         
     }
 
     private:
     void exchange_numbers(unsigned int* list) {
 
-        unsigned char sent_message[32] = {0xff};
-        std::fill_n(sent_message, 32, 0xff);
+        unsigned char sent_message[20] = {0xff};
+        std::fill_n(sent_message, 20, 0xff);
+        sent_message[0] = 'D';
+        sent_message[1] = 'H';
+        sent_message[2] = 'K';
+        sent_message[3] = 'E';
 
         memcpy(&sent_message[ 4], &list[0], 4);
         memcpy(&sent_message[ 8], &list[1], 4);
         memcpy(&sent_message[12], &list[3], 4);
 
-        unsigned char received_message[32] = {0};
-        bool success = pttps_client.send_msg( sent_message, received_message );
+        unsigned char received_message[20] = {0};
+        bool success = (*this->base_client).send_dh_msg( sent_message, received_message );
 
         memcpy(&list[4], &received_message[16], 4);
-
-        if ( success ) {
-            std::cout << "Sent msg:\n";
-            print_hex(sent_message);
-
-            std::cout << "\n\nReceived msg:\n";
-            print_hex(received_message);
-            std::cout << "\n";
-        }
 
     }
 
