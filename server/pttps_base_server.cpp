@@ -58,6 +58,8 @@ class pttps_base_server {
 
         this->setup_complete = true;
 
+        return 0;
+
     }
 
     int listener_setup( std::function<void(unsigned char*)> callback ) {

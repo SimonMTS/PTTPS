@@ -44,6 +44,8 @@ class pttps_base_client {
 
         this->setup_complete = true;
 
+        return 0;
+        
     }
     
     bool send_msg(unsigned char* sent_message, unsigned char* received_message) {
