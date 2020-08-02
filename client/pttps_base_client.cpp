@@ -68,19 +68,39 @@ class pttps_base_client {
 
     }
     
-    bool send_sp_msg(unsigned char* sent_message, unsigned char* received_message) {
+    bool send_encrypted_msg(unsigned char* sent_message, unsigned char* received_message) {
 
         if ( !this->setup_complete ) {
             printf("\nSetup not complete \n");
             return false;
         }
 
-        print_hex_SP_sent(sent_message);
+        print_hex_encrypted_sent(sent_message);
         
         send( this->sock, sent_message, 20, 0 );
-        // read( this->sock, received_message, 20 );
+
+        return true;
+
+    }
+
+    bool send_stop_msg() {
+
+        if ( !this->setup_complete ) {
+            printf("\nSetup not complete \n");
+            return false;
+        }
+
+        unsigned char sent_message[20] = {0xff};
+        for ( int i = 0; i < 20; i = i+4 ) {
+            sent_message[i  ] = 'S';
+            sent_message[i+1] = 'T';
+            sent_message[i+2] = 'O';
+            sent_message[i+3] = 'P';
+        }
+
+        print_hex_STOP_sent(sent_message);
         
-        // print_hex_DH_received(received_message);
+        send( this->sock, sent_message, 20, 0 );
 
         return true;
 

@@ -1,10 +1,11 @@
 #include <functional>
 #include <server/pttps_base_server.cpp>
 #include <diffie_hellmann_helper.cpp>
-#include <sp_network_encryption_helper.cpp>
+#include <feistel_network_encryption_helper.cpp>
 #include <hex_helper.cpp>
+#include <map>
 
-void callback(unsigned char* received_message);
+void callback(unsigned char* received_message, unsigned int socket_uid);
 
 pttps_base_server pttps_server;
 int main(int argc, char const *argv[]) 
@@ -18,24 +19,29 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void on_dh_msg(unsigned char* rm);
-void on_sp_msg(unsigned char* rm);
 
-void callback(unsigned char* received_message)
+std::map<unsigned int, unsigned int> shared_keys;
+
+void on_dh_msg(unsigned char* rm, unsigned int uid);
+void on_encrypted_msg(unsigned char* rm, unsigned int uid);
+
+void callback(unsigned char* received_message, unsigned int socket_uid)
 {
     
     char type[5] = { '\0', '\0', '\0', '\0', '\0' };
     memcpy(&type[0], &received_message[0], 4);
     
     if ( strcmp(type, "DHKE") == 0 ) {
-        on_dh_msg( received_message );
-    } else if ( strcmp(type, "SPNE") == 0 ) {
-        on_sp_msg( received_message );
+        on_dh_msg( received_message, socket_uid );
+    } else if ( strcmp(type, "ENCR") == 0 ) {
+        on_encrypted_msg( received_message, socket_uid );
+    } else if ( strcmp(type, "STOP") == 0 ) {
+        exit(EXIT_SUCCESS);
     }
 
 }
 
-void on_dh_msg(unsigned char* received_message)
+void on_dh_msg(unsigned char* received_message, unsigned int socket_uid)
 {
 
     print_hex_DH_received(received_message);
@@ -56,6 +62,8 @@ void on_dh_msg(unsigned char* received_message)
         memcpy(&received_message[16], &list[4], 4);
 
         k = DHH.calc_shared_key(list, list[3]);
+
+        shared_keys[socket_uid] = k;
     }
     
     pttps_server.send_msg(received_message);
@@ -67,18 +75,27 @@ void on_dh_msg(unsigned char* received_message)
 
 }
 
-void on_sp_msg(unsigned char* received_message)
+void on_encrypted_msg(unsigned char* received_message, unsigned int socket_uid)
 {
 
-    print_hex_SP_received(received_message);
+    print_hex_encrypted_received(received_message);
 
 
-    char msg[17];
+    unsigned char msg[17];
     memcpy(&msg[0], &received_message[4], 16);
     msg[16] = '\0';
 
-    sp_network_encryption_helper::apply_sp_network_pass(msg, 0);
+    srand(shared_keys[socket_uid]);
+    unsigned int key_array[feistel_network_encryption_helper::number_of_feistel_rounds];
+    for ( int i = feistel_network_encryption_helper::number_of_feistel_rounds-1; i >= 0; i-- ) {
+        key_array[i] = rand();
+    }
 
-    print_hex_SP_received_followup(msg);
+    feistel_network_encryption_helper::apply_feistel_network_pass(msg, key_array);
+    memcpy(&received_message[4], &msg[0], 16);
+
+    print_hex_plaintext_msg(received_message);
+
+    print_hex_encrypted_received_followup(msg);
     
 }

@@ -140,13 +140,13 @@ void print_hex_DH_received_followup(unsigned int private_key, unsigned int publi
 }
 
 
-void print_hex_SP_sent(unsigned char* message) {
+void print_hex_encrypted_sent(unsigned char* message) {
 
     int i = 0;
     unsigned int number;
 
     std::cout << std::endl;
-    std::cout << "\u001b[33;1m <- |" << "_SP_Network_Encrypted_Message______" << std::endl;
+    std::cout << "\u001b[33;1m <- |" << "_Feistel_Network_Encrypted_Message_" << std::endl;
     std::cout << "\u001b[33;1m <- |" << "__Hex________:__Decimal___:__Char__" << std::endl;
 
     for ( int n = 0; n < 5; n++ ) {
@@ -193,13 +193,13 @@ void print_hex_SP_sent(unsigned char* message) {
     
 }
 
-void print_hex_SP_received(unsigned char* message) {
+void print_hex_encrypted_received(unsigned char* message) {
 
     int i = 0;
     unsigned int number;
 
     std::cout << std::endl;
-    std::cout << "\u001b[35;1m -> |" << "_SP_Network_Encrypted_Message______" << std::endl;
+    std::cout << "\u001b[35;1m -> |" << "_Feistel_Network_Encrypted_Message_" << std::endl;
     std::cout << "\u001b[35;1m -> |" << "__Hex________:__Decimal___:__Char__" << std::endl;
 
     for ( int n = 0; n < 5; n++ ) {
@@ -245,11 +245,101 @@ void print_hex_SP_received(unsigned char* message) {
     
 }
 
-void print_hex_SP_received_followup(char* msg) {
+void print_hex_encrypted_received_followup(unsigned char* msg) {
 
-    std::cout << "\u001b[35;1m -> |\u001b[0m" << std::endl;
-    std::cout << "\u001b[35;1m -> |\u001b[0m" << " Decrypted text: \u001b[4m\u001b[35;1m"; printf("%s\u001b[0m\n", msg);
+    std::cout << "\u001b[32;1m -- |\u001b[0m" << std::endl;
+    std::cout << "\u001b[32;1m -- |\u001b[0m" << " Decrypted text: \u001b[4m\u001b[32;1m"; printf("%s\u001b[0m\n", msg);
 
+}
+
+void print_hex_plaintext_msg(unsigned char* message) {
+
+    int i = 0;
+    unsigned int number;
+
+    std::cout << std::endl;
+    std::cout << "\u001b[32;1m -- |" << "_Plaintext_Without_Encryption______" << std::endl;
+    std::cout << "\u001b[32;1m -- |" << "__Hex________:__Decimal___:__Char__" << std::endl;
+
+    for ( int n = 0; n < 5; n++ ) {
+
+        std::cout << "\u001b[32;1m -- |\u001b[0m";
+
+        for ( int j = i; i < j+4; i++ ) {
+            std::cout << " " << std::setfill('0') << std::setw(2) << std::hex << (int) message[i];
+        }
+        
+        memcpy(&number, &message[i-4], 4);
+
+        if ( number != std::numeric_limits<unsigned int>::max() && number != std::numeric_limits<unsigned int>::min() ) {
+
+            printf(" : % 10u : ", number);
+
+            if (n != 0)
+                std::cout << "\u001b[32;1m";
+                
+            std::cout << (char) message[i-4] << " ";
+            std::cout << (char) message[i-3] << " ";
+            std::cout << (char) message[i-2] << " ";
+            std::cout << (char) message[i-1] << "\u001b[0m ";
+
+        }
+
+        switch(n) {
+            case 0: std::cout << "\u001b[30;1m// Packet description\u001b[0m"; break;
+            case 1: std::cout << "\u001b[30;1m// Message data\u001b[0m"; break;
+            case 2: std::cout << "\u001b[30;1m// Message data\u001b[0m"; break;
+            case 3: std::cout << "\u001b[30;1m// Message data\u001b[0m"; break;
+            case 4: std::cout << "\u001b[30;1m// Message data\u001b[0m"; break;
+        }
+        std::cout << std::endl;
+
+    }
+    
+}
+
+void print_hex_STOP_sent(unsigned char* message) {
+
+    int i = 0;
+    unsigned int number;
+
+    std::cout << std::endl;
+    std::cout << "\u001b[31;1m <- |" << "_Server_Stop_Message_______________" << std::endl;
+    std::cout << "\u001b[31;1m <- |" << "__Hex________:__Decimal___:__Char__" << std::endl;
+
+    for ( int n = 0; n < 5; n++ ) {
+
+        std::cout << "\u001b[31;1m <- |\u001b[0m";
+
+        for ( int j = i; i < j+4; i++ ) {
+            std::cout << " " << std::setfill('0') << std::setw(2) << std::hex << (int) message[i];
+        }
+        
+        memcpy(&number, &message[i-4], 4);
+
+        if ( number != std::numeric_limits<unsigned int>::max() && number != std::numeric_limits<unsigned int>::min() ) {
+
+            printf(" : % 10u : ", number);
+
+            std::cout << "\u001b[31;1m";
+            std::cout << (char) message[i-4] << " ";
+            std::cout << (char) message[i-3] << " ";
+            std::cout << (char) message[i-2] << " ";
+            std::cout << (char) message[i-1] << "\u001b[0m ";
+
+        }
+
+        switch(n) {
+            case 0: std::cout << "\u001b[30;1m// Packet description\u001b[0m"; break;
+            case 1: std::cout << "\u001b[30;1m// Padding\u001b[0m"; break;
+            case 2: std::cout << "\u001b[30;1m// Padding\u001b[0m"; break;
+            case 3: std::cout << "\u001b[30;1m// Padding\u001b[0m"; break;
+            case 4: std::cout << "\u001b[30;1m// Padding\u001b[0m"; break;
+        }
+        std::cout << std::endl;
+
+    }
+    
 }
 
 #endif

@@ -62,17 +62,20 @@ class pttps_base_server {
 
     }
 
-    int listener_setup( std::function<void(unsigned char*)> callback ) {
+    int listener_setup( std::function<void(unsigned char*, unsigned int)> callback ) {
 
         if ( !this->setup_complete ) {
             printf("\nSetup not complete \n");
             return false;
         }
 
+        unsigned int socket_uid = 0;
         unsigned char buffer[20] = {0};
         while(true) {
 
-            std::cout << "\n\u001b[32;1m -- |\u001b[0m Listening for socket connections\n";
+            socket_uid++;
+
+            std::cout << "\n\u001b[32;1m -- |\u001b[0m Listening for socket connections, will get assigned socket_uid: " << socket_uid << "\n";
             
             if ( (this->new_socket = accept(this->server_fd, (struct sockaddr *)&this->address,   (socklen_t*)&this->addrlen)) < 0 )
             {
@@ -84,16 +87,16 @@ class pttps_base_server {
                 
                 memset(buffer, 0, sizeof buffer);
 
-                std::cout << "\n\u001b[32;1m -- |\u001b[0m Listening for socket packets\n";
+                std::cout << "\n\u001b[32;1m -- |\u001b[0m Listening for socket packets, from socket_uid: " << socket_uid << "\n";
                 
                 read( this->new_socket , buffer, 20); 
                 
                 if ( buffer[0] == 0x00 ) {
-                    std::cout << "\n\u001b[31;1m -- |\u001b[0m Client Disconnected\n";
+                    std::cout << "\n\u001b[31;1m -- |\u001b[0m Client Disconnected, from socket_uid: " << socket_uid << "\n";
                     break;
                 }
                 
-                callback( buffer );
+                callback( buffer, socket_uid );
             
             }
             

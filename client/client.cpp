@@ -1,6 +1,7 @@
 #include <client/pttps_base_client.cpp>
 #include <client/pttps_key_exchange_client.cpp>
 #include <client/pttps_encrypted_msg_client.cpp>
+#include <cstring>
 
 int main(int argc, char const **argv)
 {
@@ -21,11 +22,20 @@ int main(int argc, char const **argv)
         input_string.push_back(' ');
     }
 
-    char input[input_string.size()];
-    std::copy(input_string.begin(), input_string.end(), input);
+    char input[input_string.size()-1];
+    std::copy(input_string.begin(), input_string.end()-1, input);
+    input[input_string.size()-1] = '\0';
     
 
     pttps_base_client base_client(strdup(argv[1]), 8080);
+
+
+    if ( strcmp(input, "stop") == 0 ) {
+        base_client.send_stop_msg();
+        std::cout << std::endl;
+        return 0;
+    }
+
 
     pttps_key_exchange_client key_exchange_client( &base_client );
 
